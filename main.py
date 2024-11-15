@@ -9,12 +9,13 @@ Last Updated: 2024-11-07
 -------------------------------------------------------
 """
 
+#Current Master Password: 12345
+
 from cryptography.fernet import Fernet
 import os
 import random
 import bcrypt
 import string
-import time
 
 # Generate or load the encryption key
 def load_key():
@@ -97,24 +98,31 @@ def add_password(cipher_suite):
 def view_passwords(cipher_suite):
     # Check if the file exists and is non-empty
     if not os.path.exists("passwords.txt") or os.path.getsize("passwords.txt") == 0:
-        print("No passwords stored yet.")
+        print("\nNo passwords stored yet.")
         return
 
     try:
         with open("passwords.txt", "rb") as file:
             has_passwords = False  # Track if any passwords are found
+            
+            # Calculate the maximum length for account names for alignment
+            max_account_name_len = max(len(line.split(b":", 1)[0]) for line in file)
+            file.seek(0)  # Reset file pointer to the beginning
+            
             for line in file:
                 account_name, encrypted_password = line.split(b":", 1)
                 decrypted_password = decrypt_password(encrypted_password.strip(), cipher_suite)
-                print(f"Account: {account_name.decode()} | Password: {decrypted_password}")
-                print("-----------------------------------------------------------")
+                
+                # Print with aligned columns
+                print(f"Account: {account_name.decode().ljust(max_account_name_len)} | Password: {decrypted_password}")
+                print("----------------------------------------------------------------")
                 has_passwords = True
             
             # Check if no passwords were found
             if not has_passwords:
-                print("No passwords stored yet.")
+                print("\nNo passwords stored yet.")
     except FileNotFoundError:
-        print("No passwords stored yet.")
+        print("\nNo passwords stored yet.")
 
 
 # Delete a stored password
@@ -128,12 +136,12 @@ def delete_password(cipher_suite):
                 decrypted_password = decrypt_password(encrypted_password.strip(), cipher_suite)
                 passwords.append((account_name.decode(), decrypted_password))
     except FileNotFoundError:
-        print("No passwords stored yet.")
+        print("\nNo passwords stored yet.")
         return
 
     # Display passwords for selection
     if not passwords:
-        print("No passwords to delete.")
+        print("\nNo passwords to delete.")
         return
 
     print("Stored Accounts:")
@@ -155,9 +163,9 @@ def delete_password(cipher_suite):
 
             print(f"\nDeleted account: {account_to_delete}")
         else:
-            print("Invalid selection.")
+            print("\nInvalid selection.")
     except ValueError:
-        print("Please enter a valid number.")
+        print("\nPlease enter a valid number.")
 
 
 def setup_master_password():
@@ -181,16 +189,17 @@ def verify_master_password():
         while attempts > 0:
             master_password = input("Enter the master password: ")
             if bcrypt.checkpw(master_password.encode(), stored_hash):
-                print("Access granted.")
+                print("\nAccess granted.")
                 return True
             else:
                 attempts -= 1
                 print(f"Incorrect password. {attempts} attempts left.")
-        print("Access denied.")
+        print("\nAccess denied.")
         return False
     except FileNotFoundError:
         print("Master password file not found. Please set up the master password first.")
         return False
+
 
 def change_master_password():
     try:
@@ -216,8 +225,6 @@ def change_master_password():
         print("Master password file not found. Please set up the master password first.")
 
 
-
-
 # Main program
 def main():
     setup_master_password()
@@ -236,7 +243,7 @@ def main():
                 add_password(cipher_suite)
             elif choice == '2':
                 print()
-                print("-----------------------------------------------------------")
+                print("----------------------------------------------------------------")
                 view_passwords(cipher_suite)
             elif choice == '3':
                 delete_password(cipher_suite)
