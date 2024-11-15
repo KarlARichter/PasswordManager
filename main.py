@@ -1,11 +1,11 @@
 """
 -------------------------------------------------------
-main.py
+Main.py
 Password Manager/Generator Project
 -------------------------------------------------------
 Author: Karl Richter    
 Github: https://github.com/KarlARichter/PW_MANAGER
-Last Updated: 2024-11-07
+Last Updated: 2024-11-15
 -------------------------------------------------------
 """
 
