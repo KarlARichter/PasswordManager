@@ -17,15 +17,12 @@ import random
 import bcrypt
 import string
 
-# Generate or load the encryption key
 def load_key():
-    # If the key file does not exist, create it
     if not os.path.exists("encrypted.key"):
         key = Fernet.generate_key()
         with open("encrypted.key", "wb") as key_file:
             key_file.write(key)
     else:
-        # Load the existing key
         with open("encrypted.key", "rb") as key_file:
             key = key_file.read()
     return key
@@ -41,21 +38,18 @@ def decrypt_password(encrypted_password, cipher_suite):
     return cipher_suite.decrypt(encrypted_password).decode()
 
 
-# Generate a secure password with user-specified length
+# Generate a secure password with custom specified length
 def generate_secure_password(length=16):
-    # Ensures the password includes a mix of uppercase, lowercase, digits, and special characters
         
     characters = string.ascii_letters + string.digits + string.punctuation
     secure_password = ''.join(random.choice(characters) for _ in range(length))
 
-    # Ensure the generated password contains at least one of each character type
     if (any(c.islower() for c in secure_password) and
         any(c.isupper() for c in secure_password) and
         any(c.isdigit() for c in secure_password) and
         any(c in string.punctuation for c in secure_password)):
         return secure_password
     else:
-        # If criteria not met, recursively call to generate a new one
         return generate_secure_password(length)
 
 # Add a new password
@@ -66,22 +60,24 @@ def add_password(cipher_suite):
     if use_generated == 'yes':
         try:
             length = int(input("Enter the desired password length (minimum 12, maximum 30): "))
-            # Check if the length is within the valid range
+            
+            # Verify length
             if length < 12 or length > 30:
                 print("\nWarning: Password length is out of the recommended range. Generating password with default length (12).")
                 password = generate_secure_password(12)  # Generate password regardless of length validity
                 print(f"\nGenerated Password: {password}")
             
-            #if in valid range 
+            # Lenght verified
             else:
                 password = generate_secure_password(length)
                 print(f"\nGenerated Password: {password}")
                 
         except ValueError as e:
-            # If the input is not a valid integer, use the default length
+            # valid int check
             print(f"\nInvalid length input: {e}. Generating password with default length (12).")
             password = generate_secure_password()
-            print(f"\nGenerated Password: {password}")  # Default length
+            # use default length
+            print(f"\nGenerated Password: {password}")  
     else:
         password = input("Enter the password: ")
         print("\nPassword Added!")
@@ -94,7 +90,7 @@ def add_password(cipher_suite):
         file.write(f"{account_name}:".encode() + encrypted_password + b"\n")
 
           
-# Display all stored passwords
+# Display stored passwords
 def view_passwords(cipher_suite):
     # Check if the file exists and is non-empty
     if not os.path.exists("passwords.txt") or os.path.getsize("passwords.txt") == 0:
@@ -103,11 +99,11 @@ def view_passwords(cipher_suite):
 
     try:
         with open("passwords.txt", "rb") as file:
-            has_passwords = False  # Track if any passwords are found
+            has_passwords = False  
             
             # Calculate the maximum length for account names for alignment
             max_account_name_len = max(len(line.split(b":", 1)[0]) for line in file)
-            file.seek(0)  # Reset file pointer to the beginning
+            file.seek(0)  
             
             for line in file:
                 account_name, encrypted_password = line.split(b":", 1)
@@ -118,7 +114,7 @@ def view_passwords(cipher_suite):
                 print("----------------------------------------------------------------")
                 has_passwords = True
             
-            # Check if no passwords were found
+            # Error check for empty txt
             if not has_passwords:
                 print("\nNo passwords stored yet.")
     except FileNotFoundError:
@@ -127,7 +123,7 @@ def view_passwords(cipher_suite):
 
 # Delete a stored password
 def delete_password(cipher_suite):
-    # Load all passwords
+    
     passwords = []
     try:
         with open("passwords.txt", "rb") as file:
@@ -139,7 +135,7 @@ def delete_password(cipher_suite):
         print("\nNo passwords stored yet.")
         return
 
-    # Display passwords for selection
+    # No stored passwords
     if not passwords:
         print("\nNo passwords to delete.")
         return
@@ -168,6 +164,7 @@ def delete_password(cipher_suite):
         print("\nPlease enter a valid number.")
 
 
+# Create masterpassword
 def setup_master_password():
     if not os.path.exists("master.key"):
         master_password = input("Set a master password: ")
@@ -180,7 +177,7 @@ def setup_master_password():
         print("Master password is already set.")
 
 
-# Function to verify the master password on program start
+# If master password exists
 def verify_master_password():
     try:
         with open("master.key", "rb") as f:
@@ -201,6 +198,7 @@ def verify_master_password():
         return False
 
 
+# Change masterpass
 def change_master_password():
     try:
         with open("master.key", "rb") as f:
@@ -225,7 +223,7 @@ def change_master_password():
         print("Master password file not found. Please set up the master password first.")
 
 
-# Main program
+# Main program ui
 def main():
     setup_master_password()
     if verify_master_password():
