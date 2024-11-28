@@ -1,1 +1,0 @@
-Python password manager using AES-256 encryption with cryptography and bcrypt for secure storage. Features a master password system with hashed and salted verification, custom password generation, encryption/decryption, and CRUD operations for managing encrypted passwords.
