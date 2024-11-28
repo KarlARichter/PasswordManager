@@ -9,13 +9,16 @@ Last Updated: 2024-11-15
 -------------------------------------------------------
 """
 
-#Current Master Password: 12345
+#Current Master Password: 123
 
+from datetime import datetime
 from cryptography.fernet import Fernet
+from zxcvbn import zxcvbn
 import os
 import random
 import bcrypt
 import string
+
 
 def load_key():
     if not os.path.exists("encrypted.key"):
@@ -40,17 +43,19 @@ def decrypt_password(encrypted_password, cipher_suite):
 
 # Generate a secure password with custom specified length
 def generate_secure_password(length=16):
-        
-    characters = string.ascii_letters + string.digits + string.punctuation
-    secure_password = ''.join(random.choice(characters) for _ in range(length))
+    
+    while True:
+        characters = string.ascii_letters + string.digits + string.punctuation
+        secure_password = ''.join(random.choice(characters) for _ in range(length))
 
-    if (any(c.islower() for c in secure_password) and
-        any(c.isupper() for c in secure_password) and
-        any(c.isdigit() for c in secure_password) and
-        any(c in string.punctuation for c in secure_password)):
-        return secure_password
-    else:
-        return generate_secure_password(length)
+        if (any(c.islower() for c in secure_password) and
+            any(c.isupper() for c in secure_password) and
+            any(c.isdigit() for c in secure_password) and
+            any(c in string.punctuation for c in secure_password)):
+            if zxcvbn(secure_password)['score'] >= 3:
+                return secure_password
+#        else:
+#            return generate_secure_password(length)
 
 # Add a new password
 def add_password(cipher_suite):
@@ -80,16 +85,24 @@ def add_password(cipher_suite):
             print(f"\nGenerated Password: {password}")  
     else:
         password = input("Enter the password: ")
-        print("\nPassword Added!")
-        
 
+    #Prompt user with weak password msg
+    score = pw_strength(password)
+    if score < 3:
+        print("\nThe password is too weak. Please use a stronger password.")
+        return     
+        
+    print("\nPassword Added!")
     encrypted_password = encrypt_password(password, cipher_suite)
 
     # Store the encrypted password in the file
     with open("passwords.txt", "ab") as file:
         file.write(f"{account_name}:".encode() + encrypted_password + b"\n")
 
+    #AUDIT LOG
+    action_log("ADD_PASSWORD", account_name)
           
+
 # Display stored passwords
 def view_passwords(cipher_suite):
     # Check if the file exists and is non-empty
@@ -119,6 +132,9 @@ def view_passwords(cipher_suite):
                 print("\nNo passwords stored yet.")
     except FileNotFoundError:
         print("\nNo passwords stored yet.")
+    
+    #AUDIT LOG
+    action_log("VIEW_PASSWORDS")
 
 
 # Delete a stored password
@@ -162,6 +178,9 @@ def delete_password(cipher_suite):
             print("\nInvalid selection.")
     except ValueError:
         print("\nPlease enter a valid number.")
+    
+    #AUDIT LOG
+    action_log("DELETE_PASSWORD", account_to_delete)
 
 
 # Create masterpassword
@@ -187,14 +206,18 @@ def verify_master_password():
             master_password = input("Enter the master password: ")
             if bcrypt.checkpw(master_password.encode(), stored_hash):
                 print("\nAccess granted.")
+                action_log("LOGIN_SUCCESSFULL")
                 return True
             else:
                 attempts -= 1
                 print(f"Incorrect password. {attempts} attempts left.")
+                action_log("LOGIN_FAILURE")
         print("\nAccess denied.")
+        action_log("LOGIN_DENIED")
         return False
     except FileNotFoundError:
         print("Master password file not found. Please set up the master password first.")
+        action_log("MASTER_PASSWORD_FILE_NOT_FOUND")
         return False
 
 
@@ -222,6 +245,52 @@ def change_master_password():
     except FileNotFoundError:
         print("Master password file not found. Please set up the master password first.")
 
+    #AUDIT LOG
+    action_log("CHANGE_MASTER_PASSWORD")
+
+#zxcvbn library implementation
+def pw_strength(password):
+    strength = zxcvbn(password)
+    score = strength['score']
+    feedback = strength['feedback']
+
+    print(f"\nPassword Strength: {['Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'][score]}")
+    if feedback['warning']:
+        print(f"Warning: {feedback['warning']}")
+    if feedback['suggestions']:
+        print("\nSuggestions:")
+        for suggestion in feedback['suggestions']:
+            print(f"- {suggestion}")
+    return score
+
+
+#Action log system
+def action_log(action, account_name=None):
+    with open("audit.log", "a") as log_file:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if account_name:
+            log_file.write(f"[{timestamp}] ACTION: {action} | ACCOUNT: {account_name}\n")
+        else:
+            log_file.write(f"[{timestamp}] ACTION: {action}\n")
+
+
+#Log file size 
+def rotate_log_file():
+    if os.path.exists("audit.log") and os.path.getsize("audit.log") > 5 * 1024 * 2024:
+        os.rename("audit.log", f"audit_{datetime.now().strftime('%Y%m%d%H%M%S')}.log")
+
+
+#Clear log file
+def clear_log():
+    confirmation = input("Are you sure you want to clear the audit log? This action cannot be undone. (yes/no): ").strip().lower()
+    if confirmation == 'yes':
+        with open("audit.log", "w") as log_file:
+            log_file.write("")
+        print("\nAudit log cleared.")
+        action_log("CLEAR_LOG")
+    else:
+        print("\nClear log action canceled.")
+
 
 # Main program ui
 def main():
@@ -230,12 +299,13 @@ def main():
         key = load_key()
         cipher_suite = Fernet(key)
         while True:
-            print("\n--- Password Manager ---")
+            print("\n---- Password Manager ----")
             print("1. Add a new password")
             print("2. View stored passwords")
             print("3. Delete a password")
             print("4. Change master password")
-            print("5. Exit Program")
+            print("5. Clear log file")
+            print("6. Exit")
             choice = input("\nChoose an option: ")
             if choice == '1':
                 add_password(cipher_suite)
@@ -248,11 +318,15 @@ def main():
             elif choice == '4':
                 change_master_password()
             elif choice == '5':
+                clear_log()
+            elif choice == '6':
                 print("\nExiting program.")
+                action_log("EXITED_PROGRAM")
                 break
             else:
                 print("Invalid choice. Please try again.")
 
 
+#Main
 if __name__ == "__main__":
     main()
