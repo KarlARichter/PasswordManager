@@ -1,6 +1,6 @@
 """
 -------------------------------------------------------
-Main.py
+main.py
 Password Manager Project
 -------------------------------------------------------
 Author: Karl Richter
@@ -163,7 +163,7 @@ def delete_password(cipher_suite):
 
     try:
         # Get user input for which account to delete
-        choice = int(input("Enter the number of the account to delete: ")) - 1
+        choice = int(input("\nEnter the number of the account to delete: ")) - 1
         if 0 <= choice < len(passwords):
             account_to_delete = passwords[choice][0]
             passwords.pop(choice)
@@ -173,15 +173,14 @@ def delete_password(cipher_suite):
                 for account_name, password in passwords:
                     encrypted_password = encrypt_password(password, cipher_suite)
                     file.write(f"{account_name}:".encode() + encrypted_password + b"\n")
-
+                
+                #AUDIT LOG
+                action_log("DELETE_PASSWORD", account_to_delete)
             print(f"\nDeleted account: {account_to_delete}")
         else:
             print("\nInvalid selection.")
     except ValueError:
         print("\nPlease enter a valid number.")
-    
-    #AUDIT LOG
-    action_log("DELETE_PASSWORD", account_to_delete)
 
 
 # Create masterpassword
@@ -258,11 +257,13 @@ def pw_strength(password):
 
     print(f"\nPassword Strength: {['Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'][score]}")
     if feedback['warning']:
+        print("\n--------------------------------------------------------------")
         print(f"Warning: {feedback['warning']}")
     if feedback['suggestions']:
         print("\nSuggestions:")
         for suggestion in feedback['suggestions']:
             print(f"- {suggestion}")
+        print("--------------------------------------------------------------")
     return score
 
 
@@ -326,7 +327,7 @@ def main():
                 action_log("EXITED_PROGRAM")
                 break
             else:
-                print("Invalid choice. Please try again.")
+                print("\nInvalid choice. Please try again.")
 
 
 #Main
