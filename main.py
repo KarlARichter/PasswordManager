@@ -1,15 +1,16 @@
 """
 -------------------------------------------------------
 Main.py
-Password Manager/Generator Project
+Password Manager Project
 -------------------------------------------------------
-Author: Karl Richter    
-Github: https://github.com/KarlARichter/PW_MANAGER
-Last Updated: 2024-11-15
+Author: Karl Richter
+Contact: karlalexrichter@gmail.com    
+Github Repo: https://github.com/KarlARichter/PW_MANAGER
+Last Updated: 2024-11-29
 -------------------------------------------------------
 """
 
-#Current Master Password: 123
+#Testing Use Master Password: 123
 
 from datetime import datetime
 from cryptography.fernet import Fernet
@@ -20,6 +21,7 @@ import bcrypt
 import string
 
 
+# Encrypted key generation
 def load_key():
     if not os.path.exists("encrypted.key"):
         key = Fernet.generate_key()
@@ -54,8 +56,7 @@ def generate_secure_password(length=16):
             any(c in string.punctuation for c in secure_password)):
             if zxcvbn(secure_password)['score'] >= 3:
                 return secure_password
-#        else:
-#            return generate_secure_password(length)
+
 
 # Add a new password
 def add_password(cipher_suite):
@@ -247,6 +248,7 @@ def change_master_password():
 
     #AUDIT LOG
     action_log("CHANGE_MASTER_PASSWORD")
+
 
 #zxcvbn library implementation
 def pw_strength(password):
