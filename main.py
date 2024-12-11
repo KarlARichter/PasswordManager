@@ -16,6 +16,7 @@ from datetime import datetime
 from cryptography.fernet import Fernet
 from zxcvbn import zxcvbn
 import os
+import sys
 import random
 import bcrypt
 import string
@@ -295,8 +296,24 @@ def clear_log():
         print("\nClear log action canceled.")
 
 
+#Prints contents of log file
+def view_log(file_path):
+    try:
+        with open(file_path, "r") as log_file:
+            print("\n---- Log File Content ----\n")
+            for line in log_file:
+                print(line.strip())
+            print("\n---- End of Log File ----")
+    
+    except FileNotFoundError:
+        print(f"Error: The file '{file_path}' does not exist.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    
+
 # Main program ui
 def main():
+    log_file_path = 'audit.log'
     setup_master_password()
     if verify_master_password():
         key = load_key()
@@ -307,8 +324,9 @@ def main():
             print("2. View stored passwords")
             print("3. Delete a password")
             print("4. Change master password")
-            print("5. Clear log file")
-            print("6. Exit")
+            print("5. View log file")
+            print("6. Clear log file")
+            print("7. Exit")
             choice = input("\nChoose an option: ")
             if choice == '1':
                 add_password(cipher_suite)
@@ -321,8 +339,10 @@ def main():
             elif choice == '4':
                 change_master_password()
             elif choice == '5':
-                clear_log()
+                view_log(log_file_path)
             elif choice == '6':
+                clear_log()
+            elif choice == '7':
                 print("\nExiting program.")
                 action_log("EXITED_PROGRAM")
                 break
