@@ -16,7 +16,6 @@ from datetime import datetime
 from cryptography.fernet import Fernet
 from zxcvbn import zxcvbn
 import os
-import sys
 import random
 import bcrypt
 import string
