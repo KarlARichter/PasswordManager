@@ -299,10 +299,10 @@ def clear_log():
 def view_log(file_path):
     try:
         with open(file_path, "r") as log_file:
-            print("\n---- Log File Content ----\n")
+            print("\n---- Start of Log File Contents ----\n")
             for line in log_file:
                 print(line.strip())
-            print("\n---- End of Log File ----")
+            print("\n---- End of Log File Contents ----")
     
     except FileNotFoundError:
         print(f"Error: The file '{file_path}' does not exist.")
