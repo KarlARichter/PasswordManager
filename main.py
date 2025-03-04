@@ -19,6 +19,8 @@ import os
 import random
 import bcrypt
 import string
+import tkinter as tk
+
 
 
 # Encrypted key generation
